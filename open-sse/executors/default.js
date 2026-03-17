@@ -58,10 +58,23 @@ export class DefaultExecutor extends BaseExecutor {
         break;
       default:
         if (this.provider?.startsWith?.("anthropic-compatible-")) {
-          if (credentials.apiKey) {
-            headers["x-api-key"] = credentials.apiKey;
-          } else if (credentials.accessToken) {
-            headers["Authorization"] = `Bearer ${credentials.accessToken}`;
+          // Check for authType override in providerSpecificData (defaults to "x-api-key" for backward compatibility)
+          const authType = credentials.providerSpecificData?.authType || "x-api-key";
+
+          if (authType === "bearer") {
+            // Use Authorization: Bearer header (required by some proxies like pro-x.io.vn)
+            if (credentials.apiKey) {
+              headers["Authorization"] = `Bearer ${credentials.apiKey}`;
+            } else if (credentials.accessToken) {
+              headers["Authorization"] = `Bearer ${credentials.accessToken}`;
+            }
+          } else {
+            // Default: use x-api-key header
+            if (credentials.apiKey) {
+              headers["x-api-key"] = credentials.apiKey;
+            } else if (credentials.accessToken) {
+              headers["Authorization"] = `Bearer ${credentials.accessToken}`;
+            }
           }
           if (!headers["anthropic-version"]) {
             headers["anthropic-version"] = "2023-06-01";

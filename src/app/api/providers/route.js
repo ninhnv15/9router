@@ -143,10 +143,14 @@ export async function POST(request) {
         return NextResponse.json({ error: "Only one connection is allowed for this Anthropic Compatible node" }, { status: 400 });
       }
 
+      // Get authType from body (defaults to "x-api-key" for backward compatibility)
+      const authType = body.authType || "x-api-key";
+
       providerSpecificData = {
         prefix: node.prefix,
         baseUrl: node.baseUrl,
         nodeName: node.name,
+        authType: authType, // Store authType to control header format
       };
     }
 

@@ -219,12 +219,23 @@ export function buildProviderHeaders(provider, credentials, stream = true, body 
   // Add auth header
   // Specific override for Anthropic Compatible
   if (isAnthropicCompatible(provider)) {
-    if (credentials.apiKey) {
-      headers["x-api-key"] = credentials.apiKey;
-      // Do NOT send Authorization header when apiKey is present for Anthropic Compatible
-      // as it causes issues with some providers (e.g. opencode.ai)
-    } else if (credentials.accessToken) {
-      headers["Authorization"] = `Bearer ${credentials.accessToken}`;
+    // Check for authType override in providerSpecificData (defaults to "x-api-key" for backward compatibility)
+    const authType = credentials.providerSpecificData?.authType || "x-api-key";
+
+    if (authType === "bearer") {
+      // Use Authorization: Bearer header (required by some proxies like pro-x.io.vn)
+      if (credentials.apiKey) {
+        headers["Authorization"] = `Bearer ${credentials.apiKey}`;
+      } else if (credentials.accessToken) {
+        headers["Authorization"] = `Bearer ${credentials.accessToken}`;
+      }
+    } else {
+      // Default: use x-api-key header
+      if (credentials.apiKey) {
+        headers["x-api-key"] = credentials.apiKey;
+      } else if (credentials.accessToken) {
+        headers["Authorization"] = `Bearer ${credentials.accessToken}`;
+      }
     }
     // Add default Anthropic version if not present (some proxies require it)
     if (!headers["anthropic-version"]) {

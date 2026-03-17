@@ -1634,6 +1634,7 @@ function AddApiKeyModal({ isOpen, provider, providerName, isCompatible, isAnthro
     apiKey: "",
     priority: 1,
     proxyPoolId: NONE_PROXY_POOL_VALUE,
+    authType: "x-api-key", // For Anthropic-compatible: "x-api-key" or "bearer"
   });
   const [validating, setValidating] = useState(false);
   const [validationResult, setValidationResult] = useState(null);
@@ -1685,7 +1686,7 @@ function AddApiKeyModal({ isOpen, provider, providerName, isCompatible, isAnthro
         priority: formData.priority,
         proxyPoolId: formData.proxyPoolId === NONE_PROXY_POOL_VALUE ? null : formData.proxyPoolId,
         testStatus: isValid ? "active" : "unknown",
-        providerSpecificData: undefined
+        authType: isAnthropic ? formData.authType : undefined // Only send authType for Anthropic-compatible
       });
     } finally {
       setSaving(false);
@@ -1721,6 +1722,19 @@ function AddApiKeyModal({ isOpen, provider, providerName, isCompatible, isAnthro
           <Badge variant={validationResult === "success" ? "success" : "error"}>
             {validationResult === "success" ? "Valid" : "Invalid"}
           </Badge>
+        )}
+        {/* Auth Type dropdown for Anthropic-compatible providers */}
+        {isAnthropic && (
+          <Select
+            label="Auth Type"
+            value={formData.authType}
+            onChange={(e) => setFormData({ ...formData, authType: e.target.value })}
+            options={[
+              { value: "x-api-key", label: "x-api-key header (default)" },
+              { value: "bearer", label: "Authorization: Bearer header" },
+            ]}
+            hint="Use Bearer if your proxy requires Authorization header instead of x-api-key (e.g., pro-x.io.vn)"
+          />
         )}
         {isCompatible && (
           <p className="text-xs text-text-muted">
